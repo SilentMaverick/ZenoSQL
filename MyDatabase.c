@@ -2,6 +2,119 @@
 #include<stdlib.h>
 #include<string.h>
 #include<time.h>
+void login_or_register() {
+    int choice;
+    char new_login_id[50];
+    char new_password[5];
+    int key = 4; // Example encryption key
+
+    printf("\n========== Authentication System ==========\n");
+    printf("1. Login\n");
+    printf("2. Register\n");
+    printf("Enter your choice: ");
+    if (scanf("%d", &choice) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n'); // Clear input buffer
+        return 0;
+    }
+
+    if (choice == 1) {
+        if (authenticate_user()) {
+            printf("Login successful!\n");
+            return 1;
+        } else {
+            printf("Login failed! Please try again.\n");
+            return 0;
+        }
+    } else if (choice == 2) {
+        printf("Enter new login ID (max 49 chars): ");
+        scanf("%49s", new_login_id);
+        printf("Enter new 4-character password: ");
+        scanf("%4s", new_password);
+
+        // Encrypt the new password
+        encrypt(new_password, key);
+
+        // Store the new login ID and encrypted password
+        FILE *fptr = fopen("credentials.txt", "w");
+        if (fptr == NULL) {
+            printf("Error opening file to store credentials\n");
+            return 0;
+        }
+        fprintf(fptr, "%s\n%s\n", new_login_id, new_password);
+        fclose(fptr);
+
+        printf("Registration successful! Please login with your new credentials.\n");
+        return login_or_register(); // Recursive call to login after registration
+    } else {
+        printf("Invalid choice\n");
+        return 0;
+    }
+}
+
+void encrypt(char *str, int key) {
+    while (*str) {
+        *str = *str + key;
+        str++;
+    }
+}
+
+void decrypt(char *str, int key) {
+    while (*str) {
+        *str = *str - key;
+        str++;
+    }
+}
+
+void store_password(const char *password) {
+    FILE *fptr = fopen("passwords.txt", "w");
+    if (fptr == NULL) {
+        printf("Error opening file to store password\n");
+        return;
+    }
+    fprintf(fptr, "%s\n", password);
+    fclose(fptr);
+}
+
+int authenticate_user() {
+    char login_id[50];
+    char password[5]; // Password should be 4 characters long
+    char stored_login_id[50] = "admin"; // Example login ID
+    char stored_password[5] = "pass"; // Example 4-character password
+    int key = 4; // Example encryption key
+
+    printf("Enter login ID: ");
+    scanf("%s", login_id);
+    printf("Enter 4-character password: ");
+    scanf("%4s", password); // Limit input to 4 characters
+
+    // Encrypt the entered password
+    encrypt(password, key);
+
+    // Check if login ID and encrypted password match the stored values
+    if (strcmp(login_id, stored_login_id) == 0 && strcmp(password, stored_password) == 0) {
+        // Decrypt the password for further use
+        decrypt(password, key);
+        return 1; // Authentication successful
+    } else {
+        printf("Invalid login ID or password\n");
+        return 0; // Authentication failed
+    }
+}
+
+// Store the encrypted password in a file
+void initialize_password_storage() {
+    char stored_password[5] = "pass"; // Example 4-character password
+    int key = 4; // Example encryption key
+
+    // Encrypt the stored password
+    encrypt(stored_password, key);
+
+    // Store the encrypted password
+    store_password(stored_password);
+}
+
+
 
 #define MAX_ROWS 100
 #define MAX_COLS 10
@@ -1850,13 +1963,13 @@ void access_database() {
 
     do {
         printf("\nDatabase Operations:\n");
-        printf("1. Show existing tables\n");
-        printf("2. Create new table\n");
-        printf("3. Modify existing table\n");
-        printf("4. Return to main menu\n");
+        printf("1. Show Tables\n");
+        printf("2. Create Table\n");
+        printf("3. Modify Table\n");
+        printf("4. Return to Main Menu\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
-
+        
         switch(choice) {
             case 1:
                 show_tables_in_database(database_name);
@@ -1865,7 +1978,6 @@ void access_database() {
                 create_table_in_database(database_name);
                 break;
             case 3:
-                show_tables_in_database(database_name);
                 modify_existing_table(database_name);
                 break;
             case 4:
@@ -1947,18 +2059,40 @@ void Table_sorting() {
 }
 
 int main() {
+    // Initialize password system
+    initialize_password_storage();
+    
+    // Login or Register menu
+    while (!login_or_register()) {
+        printf("\nPlease try again or register a new account.\n");
+    }
+    
+    printf("\nWelcome to the Database Management System.\n\n");
+    
     int choice;
     do {
-        printf("\nDatabase Managment System\n");
+        printf("------+-----+------+------+------+------+\n");
+        printf("  _______   ______  _   _     __  ______  \n");
+        printf(" |__  / _ \ |__  / _  \ | \\  | | |___  / \n");
+        printf("   / / | | |  / / | |   | |\\ | |    / /  \n");
+        printf("  / /| |_| | / /__|_|   | | \\| |   / /__ \n");
+        printf(" /____\___/ /____|___/|_| |  \\_|  /_____|\n");
+        printf("------+-----+------+------+------+------+\n\n");
+        printf("Database Management System\n");
         printf("1. Show Existing Databases\n");
         printf("2. Create Database\n");
         printf("3. Access Database\n");
         printf("4. Delete Database\n");
         printf("5. Sort Table\n");
-        printf("6. Student Managment\n");
+        printf("6. Student Management\n");
         printf("7. Exit\n");
         printf("Enter your choice: ");
-        scanf("%d", &choice);
+        
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Please enter a number.\n");
+            while (getchar() != '\n'); // Clear input buffer
+            continue;
+        }
 
         switch(choice) {
             case 1:
@@ -1983,7 +2117,7 @@ int main() {
                 printf("Exiting program...\n");
                 break;
             default:
-                printf("Invalid choice\n");
+                printf("Invalid choice. Please enter a number between 1 and 7.\n");
         }
     } while(choice != 7);
     
