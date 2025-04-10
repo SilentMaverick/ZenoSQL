@@ -2,56 +2,128 @@
 #include<stdlib.h>
 #include<string.h>
 #include<time.h>
-void login_or_register() {
-    int choice;
-    char new_login_id[50];
-    char new_password[5];
-    int key = 4; // Example encryption key
+#include<ctype.h>
+#include<dirent.h>
 
-    printf("\n========== Authentication System ==========\n");
-    printf("1. Login\n");
-    printf("2. Register\n");
-    printf("Enter your choice: ");
-    if (scanf("%d", &choice) != 1) {
-        printf("Invalid input\n");
-        while (getchar() != '\n'); // Clear input buffer
-        return 0;
-    }
+// Constants
+#define MAX_ROWS 100
+#define MAX_COLS 10
+#define MAX_STR_LEN 50
+#define MAX_DB_NAME 50
+#define MAX_LOGIN_ID 50
+#define MAX_PASSWORD 5
+#define HASH_SIZE 64
 
-    if (choice == 1) {
-        if (authenticate_user()) {
-            printf("Login successful!\n");
-            return 1;
-        } else {
-            printf("Login failed! Please try again.\n");
-            return 0;
-        }
-    } else if (choice == 2) {
-        printf("Enter new login ID (max 49 chars): ");
-        scanf("%49s", new_login_id);
-        printf("Enter new 4-character password: ");
-        scanf("%4s", new_password);
+// Structure declarations
+struct Cell {
+    char str_value[MAX_STR_LEN];
+    int int_value;
+    float float_value;
+    char data_type;
+};
 
-        // Encrypt the new password
-        encrypt(new_password, key);
+struct Table {
+    char name[MAX_DB_NAME];
+    int rows;
+    int columns;
+    char row_names[MAX_ROWS][MAX_STR_LEN];
+    char column_names[MAX_COLS][MAX_STR_LEN];
+    struct Cell data[MAX_ROWS][MAX_COLS];
+    char column_types[MAX_COLS];
+};
 
-        // Store the new login ID and encrypted password
-        FILE *fptr = fopen("credentials.txt", "w");
-        if (fptr == NULL) {
-            printf("Error opening file to store credentials\n");
-            return 0;
-        }
-        fprintf(fptr, "%s\n%s\n", new_login_id, new_password);
-        fclose(fptr);
+struct Book {
+    char title[50];
+    char author[50];
+    int available;
+    char due_date[20];
+};
 
-        printf("Registration successful! Please login with your new credentials.\n");
-        return login_or_register(); // Recursive call to login after registration
-    } else {
-        printf("Invalid choice\n");
-        return 0;
-    }
-}
+struct Train {
+    char name[50];
+    int number;
+    char time[20];
+    char date[20];
+    char location[50];
+};
 
+struct Ticket {
+    char personal_id[20];
+    char train_name[50];
+    float ticket_price;
+};
+
+struct Contact {
+    char name[50];
+    char phone[20];
+    char email[50];
+    char address[100];
+};
+
+struct Office {
+    char department[50];
+    char employee_name[50];
+    char position[50];
+    float salary;
+    char join_date[20];
+};
+
+struct Student {
+    char name[50];
+    int roll_number;
+    char course[50];
+    char department[50];
+    float cgpa;
+    char admission_date[20];
+};
+
+// Define Student Structure
+typedef struct {
+    int roll;
+    char name[50];
+    char course[50];
+    float marks;
+} Student;
+
+// Function Prototypes
+void encrypt(char *str, int key);
+void decrypt(char *str, int key);
+void store_password(const char *password);
+int authenticate_user(void);
+void initialize_password_storage(void);
+int login_or_register(void);
+int is_valid_database_name(const char *name);
+void show_existing_databases(void);
+int create_database(void);
+int access_database(void);
+void Delete_Database(void);
+void Table_sorting(void);
+void Student_Management(void);
+void Library_Management(void);
+void Ticket_Management(void);
+void Employee_Management(void);
+void Book_Management(void);
+void Movie_Management(void);
+void Music_Management(void);
+void Restaurant_Management(void);
+void Hotel_Management(void);
+void Car_Management(void);
+void Contact_Management(void);
+int pre_made_libraries(void);
+void sort_table(struct Table *table, int column_index, int ascending);
+void display_sorted_table(struct Table *table);
+void test_table_sorting(void);
+void Modify_Table(void);
+void create_table_in_database(char *database_name);
+int show_tables_in_database(char *database_name);
+void modify_existing_table(char *database_name);
+void Office_Management(void);
+void display_table_data(char *database_name);
+void sort_table_in_database(char *database_name);
+void display_zron_logo();
+void input_table_data(char *database_name);
+
+// Function implementations
 void encrypt(char *str, int key) {
     while (*str) {
         *str = *str + key;
@@ -76,17 +148,65 @@ void store_password(const char *password) {
     fclose(fptr);
 }
 
-int authenticate_user() {
-    char login_id[50];
-    char password[5]; // Password should be 4 characters long
-    char stored_login_id[50] = "admin"; // Example login ID
+void initialize_password_storage(void) {
     char stored_password[5] = "pass"; // Example 4-character password
     int key = 4; // Example encryption key
 
+    // Encrypt the stored password
+    encrypt(stored_password, key);
+
+    // Store the encrypted password
+    store_password(stored_password);
+}
+
+int is_valid_database_name(const char *name) {
+    if (name == NULL || strlen(name) == 0 || strlen(name) >= MAX_DB_NAME) {
+        return 0;
+    }
+    
+    // Check for invalid characters
+    for (int i = 0; name[i] != '\0'; i++) {
+        if (!isalnum(name[i]) && name[i] != '_' && name[i] != '-') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int authenticate_user(void) {
+    char login_id[MAX_LOGIN_ID];
+    char password[MAX_PASSWORD];
+    char stored_login_id[MAX_LOGIN_ID];
+    char stored_password[MAX_PASSWORD];
+    int key = 4;
+
     printf("Enter login ID: ");
-    scanf("%s", login_id);
+    if (scanf("%49s", login_id) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n'); // Clear input buffer
+        return 0;
+    }
+
     printf("Enter 4-character password: ");
-    scanf("%4s", password); // Limit input to 4 characters
+    if (scanf("%4s", password) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n'); // Clear input buffer
+        return 0;
+    }
+
+    // Read stored credentials
+    FILE *fptr = fopen("credentials.txt", "r");
+    if (fptr == NULL) {
+        printf("Error reading credentials\n");
+        return 0;
+    }
+
+    if (fscanf(fptr, "%49s\n%4s\n", stored_login_id, stored_password) != 2) {
+        printf("Error reading stored credentials\n");
+        fclose(fptr);
+        return 0;
+    }
+    fclose(fptr);
 
     // Encrypt the entered password
     encrypt(password, key);
@@ -102,1452 +222,63 @@ int authenticate_user() {
     }
 }
 
-// Store the encrypted password in a file
-void initialize_password_storage() {
-    char stored_password[5] = "pass"; // Example 4-character password
-    int key = 4; // Example encryption key
-
-    // Encrypt the stored password
-    encrypt(stored_password, key);
-
-    // Store the encrypted password
-    store_password(stored_password);
-}
-
-
-
-#define MAX_ROWS 100
-#define MAX_COLS 10
-#define MAX_STR_LEN 50
-
-// Structure declarations
-struct Cell {
-    char str_value[MAX_STR_LEN];
-    int int_value;
-    float float_value;
-    char data_type;
-};
-
-struct Table {
-    char name[50];
-    int rows;
-    int columns;
-    char row_names[MAX_ROWS][50];
-    char column_names[MAX_COLS][50];
-    struct Cell data[MAX_ROWS][MAX_COLS];
-    char column_types[MAX_COLS];
-};
-
-int compare_float(const void* a, const void* b) {
-    float diff = (*(float*)a - *(float*)b);
-    return (diff > 0) ? 1 : ((diff < 0) ? -1 : 0);
-}
-
-int compare_string(const void* a, const void* b) {
-    return strcmp((char*)a, (char*)b);
-}
-
-void pre_made_libraries(){
+int login_or_register(void) {
     int choice;
-    printf("1. Library Managment Database\n");
-    printf("2. Ticket Managment Database\n");
-    printf("3. Student Managment Database\n");
-    printf("4. Employee Managment Database\n");
-    printf("5. Book Managment Database\n");
-    printf("6. Movie Managment Database\n");
-    printf("7. Music Managment Database\n");
-    printf("8. Restaurant Managment Database\n");
-    printf("9. Hotel Managment Database\n");
-    printf("10. Car Managment Database\n");
-    printf("11. Exit\n");
+    char new_login_id[MAX_LOGIN_ID];
+    char new_password[MAX_PASSWORD];
+    int key = 4;
+
+    printf("\n========== Authentication System ==========\n");
+    printf("1. Login\n");
+    printf("2. Register\n");
     printf("Enter your choice: ");
-    scanf("%d", &choice);
-    switch(choice) {
-        case 1:
-            Library_Managment();
-            break;
-        case 2:
-            Ticket_Managment();
-            break;
-        case 3:
-            Student_Managment();
-            break;
-        case 4:
-            Employee_Managment();
-            break;
-        case 5:
-            Book_Managment();
-            break;
-        case 6:
-            Movie_Managment();
-            break;
-        case 7:
-            Music_Managment();
-            break;
-        case 8:
-            Restaurant_Managment();
-            break;
-        case 9:
-            Hotel_Managment();
-            break;
-        case 10:
-            Car_Managment();
-            break;
-        case 11:
-            printf("Exiting program...\n");
-            break;   
-        default:
-            printf("Invalid choice\n");
+    
+    if (scanf("%d", &choice) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return 0;
     }
-}
-void Employee_Managment() {
-    struct Employee {
-        char name[50];
-        int id;
-        char position[50];
-        float salary;
-    };
 
-    void add_employee() {
-        struct Employee employee;
-        FILE *fptr;
-        fptr = fopen("EmployeeDatabase.txt", "a");
+    if (choice == 1) {
+        return authenticate_user();
+    } else if (choice == 2) {
+        printf("Enter new login ID (max 49 chars): ");
+        if (scanf("%49s", new_login_id) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            return 0;
+        }
+
+        printf("Enter new 4-character password: ");
+        if (scanf("%4s", new_password) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            return 0;
+        }
+
+        // Encrypt the new password
+        encrypt(new_password, key);
+
+        // Store the new login ID and encrypted password
+        FILE *fptr = fopen("credentials.txt", "w");
         if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
+            printf("Error opening file to store credentials\n");
+            return 0;
         }
-
-        printf("Enter employee name: ");
-        scanf("%s", employee.name);
-        printf("Enter employee ID: ");
-        scanf("%d", &employee.id);
-        printf("Enter employee position: ");
-        scanf("%s", employee.position);
-        printf("Enter employee salary: ");
-        scanf("%f", &employee.salary);
-
-        fprintf(fptr, "Name: %s\nID: %d\nPosition: %s\nSalary: %.2f\n\n", 
-                employee.name, employee.id, employee.position, employee.salary);
-        fclose(fptr);
-        printf("Employee record added successfully\n");
-    }
-
-    void access_employee_database() {
-        struct Employee employee;
-        FILE *fptr;
-        fptr = fopen("EmployeeDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Employees in the database:\n");
-        while (fscanf(fptr, "Name: %s\nID: %d\nPosition: %s\nSalary: %f\n\n", 
-                      employee.name, &employee.id, employee.position, &employee.salary) != EOF) {
-            printf("Name: %s, ID: %d, Position: %s, Salary: %.2f\n", 
-                   employee.name, employee.id, employee.position, employee.salary);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_employee_database() {
-        access_employee_database();
-    }
-
-    int choice;
-    printf("Employee Managment Database\n");
-    printf("1. Add Employee\n");
-    printf("2. Access Employee Database\n");
-    printf("3. Display Employee Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_employee();
-            break;
-        case 2:
-            access_employee_database();
-            break;
-        case 3:
-            display_employee_database();
-            break;
-        case 4:
-            printf("Exiting Employee Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-void Book_Managment() {
-    struct Book {
-        char title[50];
-        char author[50];
-        int available;
-        char due_date[20];
-    };
-
-    void add_book() {
-        struct Book book;
-        FILE *fptr;
-        fptr = fopen("BookDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter book title: ");
-        scanf("%s", book.title);
-        printf("Enter book author: ");
-        scanf("%s", book.author);
-        book.available = 1;
-        strcpy(book.due_date, "N/A");
-
-        fprintf(fptr, "Title: %s\nAuthor: %s\nAvailable: %d\nDue Date: %s\n\n", 
-                book.title, book.author, book.available, book.due_date);
-        fclose(fptr);
-        printf("Book record added successfully\n");
-    }
-
-    void access_book_database() {
-        struct Book book;
-        FILE *fptr;
-        fptr = fopen("BookDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Books in the database:\n");
-        while (fscanf(fptr, "Title: %s\nAuthor: %s\nAvailable: %d\nDue Date: %s\n\n", 
-                      book.title, book.author, &book.available, book.due_date) != EOF) {
-            printf("Title: %s, Author: %s, Available: %d, Due Date: %s\n", 
-                   book.title, book.author, book.available, book.due_date);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_book_database() {
-        access_book_database();
-    }
-
-    int choice;
-    printf("Book Managment Database\n");
-    printf("1. Add Book\n");
-    printf("2. Access Book Database\n");
-    printf("3. Display Book Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_book();
-            break;
-        case 2:
-            access_book_database();
-            break;
-        case 3:
-            display_book_database();
-            break;
-        case 4:
-            printf("Exiting Book Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-void Movie_Managment() {
-    struct Movie {
-        char title[50];
-        char director[50];
-        int available;
-        char release_date[20];
-    };
-
-    void add_movie() {
-        struct Movie movie;
-        FILE *fptr;
-        fptr = fopen("MovieDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter movie title: ");
-        scanf("%s", movie.title);
-        printf("Enter movie director: ");
-        scanf("%s", movie.director);
-        movie.available = 1;
-        strcpy(movie.release_date, "N/A");
-
-        fprintf(fptr, "Title: %s\nDirector: %s\nAvailable: %d\nRelease Date: %s\n\n", 
-                movie.title, movie.director, movie.available, movie.release_date);
-        fclose(fptr);
-        printf("Movie record added successfully\n");
-    }
-
-    void access_movie_database() {
-        struct Movie movie;
-        FILE *fptr;
-        fptr = fopen("MovieDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Movies in the database:\n");
-        while (fscanf(fptr, "Title: %s\nDirector: %s\nAvailable: %d\nRelease Date: %s\n\n", 
-                      movie.title, movie.director, &movie.available, movie.release_date) != EOF) {
-            printf("Title: %s, Director: %s, Available: %d, Release Date: %s\n", 
-                   movie.title, movie.director, movie.available, movie.release_date);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_movie_database() {
-        access_movie_database();
-    }
-
-    int choice;
-    printf("Movie Managment Database\n");
-    printf("1. Add Movie\n");
-    printf("2. Access Movie Database\n");
-    printf("3. Display Movie Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_movie();
-            break;
-        case 2:
-            access_movie_database();
-            break;
-        case 3:
-            display_movie_database();
-            break;
-        case 4:
-            printf("Exiting Movie Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-void Music_Managment() {
-    struct Music {
-        char title[50];
-        char artist[50];
-        int available;
-        char release_date[20];
-    };
-
-    void add_music() {
-        struct Music music;
-        FILE *fptr;
-        fptr = fopen("MusicDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter music title: ");
-        scanf("%s", music.title);
-        printf("Enter music artist: ");
-        scanf("%s", music.artist);
-        music.available = 1;
-        strcpy(music.release_date, "N/A");
-
-        fprintf(fptr, "Title: %s\nArtist: %s\nAvailable: %d\nRelease Date: %s\n\n", 
-                music.title, music.artist, music.available, music.release_date);
-        fclose(fptr);
-        printf("Music record added successfully\n");
-    }
-
-    void access_music_database() {
-        struct Music music;
-        FILE *fptr;
-        fptr = fopen("MusicDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Music in the database:\n");
-        while (fscanf(fptr, "Title: %s\nArtist: %s\nAvailable: %d\nRelease Date: %s\n\n", 
-                      music.title, music.artist, &music.available, music.release_date) != EOF) {
-            printf("Title: %s, Artist: %s, Available: %d, Release Date: %s\n", 
-                   music.title, music.artist, music.available, music.release_date);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_music_database() {
-        access_music_database();
-    }
-
-    int choice;
-    printf("Music Managment Database\n");
-    printf("1. Add Music\n");
-    printf("2. Access Music Database\n");
-    printf("3. Display Music Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_music();
-            break;
-        case 2:
-            access_music_database();
-            break;
-        case 3:
-            display_music_database();
-            break;
-        case 4:
-            printf("Exiting Music Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-
-void Contact_Managment() {
-    struct Contact {
-        char name[50];
-        char phone[15];
-        char email[50];
-    };
-    void delete_contact() {
-        struct Contact contact;
-        FILE *fptr, *temp;
-        char name[50];
-        int found = 0;
-
-        fptr = fopen("ContactDatabase.txt", "r");
-        temp = fopen("TempContactDatabase.txt", "w");
-        if (fptr == NULL || temp == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter the name of the contact to delete: ");
-        scanf("%s", name);
-
-        while (fscanf(fptr, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                      contact.name, contact.phone, contact.email) != EOF) {
-            if (strcmp(contact.name, name) != 0) {
-                fprintf(temp, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                        contact.name, contact.phone, contact.email);
-            } else {
-                found = 1;
-            }
-        }
-
-        fclose(fptr);
-        fclose(temp);
-
-        remove("ContactDatabase.txt");
-        rename("TempContactDatabase.txt", "ContactDatabase.txt");
-
-        if (found) {
-            printf("Contact deleted successfully\n");
-        } else {
-            printf("Contact not found\n");
-        }
-    }
-
-    void update_contact() {
-        struct Contact contact;
-        FILE *fptr, *temp;
-        char name[50];
-        int found = 0;
-
-        fptr = fopen("ContactDatabase.txt", "r");
-        temp = fopen("TempContactDatabase.txt", "w");
-        if (fptr == NULL || temp == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter the name of the contact to update: ");
-        scanf("%s", name);
-
-        while (fscanf(fptr, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                      contact.name, contact.phone, contact.email) != EOF) {
-            if (strcmp(contact.name, name) == 0) {
-                found = 1;
-                printf("Enter new phone: ");
-                scanf("%s", contact.phone);
-                printf("Enter new email: ");
-                scanf("%s", contact.email);
-            }
-            fprintf(temp, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                    contact.name, contact.phone, contact.email);
-        }
-
-        fclose(fptr);
-        fclose(temp);
-
-        remove("ContactDatabase.txt");
-        rename("TempContactDatabase.txt", "ContactDatabase.txt");
-
-        if (found) {
-            printf("Contact updated successfully\n");
-        } else {
-            printf("Contact not found\n");
-        }
-    }
-
-    void merge_contacts() {
-        struct Contact contact1, contact2, merged_contact;
-        FILE *fptr, *temp;
-        char name1[50], name2[50];
-        int found1 = 0, found2 = 0;
-
-        fptr = fopen("ContactDatabase.txt", "r");
-        temp = fopen("TempContactDatabase.txt", "w");
-        if (fptr == NULL || temp == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter the name of the first contact to merge: ");
-        scanf("%s", name1);
-        printf("Enter the name of the second contact to merge: ");
-        scanf("%s", name2);
-
-        while (fscanf(fptr, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                      contact1.name, contact1.phone, contact1.email) != EOF) {
-            if (strcmp(contact1.name, name1) == 0) {
-                found1 = 1;
-                merged_contact = contact1;
-            } else if (strcmp(contact1.name, name2) == 0) {
-                found2 = 1;
-                strcpy(merged_contact.phone, contact1.phone);
-                strcpy(merged_contact.email, contact1.email);
-            } else {
-                fprintf(temp, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                        contact1.name, contact1.phone, contact1.email);
-            }
-        }
-
-        if (found1 && found2) {
-            fprintf(temp, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                    merged_contact.name, merged_contact.phone, merged_contact.email);
-            printf("Contacts merged successfully\n");
-        } else {
-            printf("One or both contacts not found\n");
-        }
-
-        fclose(fptr);
-        fclose(temp);
-
-        remove("ContactDatabase.txt");
-        rename("TempContactDatabase.txt", "ContactDatabase.txt");
-    }
-
-    void add_contact() {
-        struct Contact contact;
-        FILE *fptr;
-        fptr = fopen("ContactDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter contact name: ");
-        scanf("%s", contact.name);
-        printf("Enter contact phone: ");
-        scanf("%s", contact.phone);
-        printf("Enter contact email: ");
-        scanf("%s", contact.email);
-
-        fprintf(fptr, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                contact.name, contact.phone, contact.email);
-        fclose(fptr);
-        printf("Contact record added successfully\n");
-    }
-
-    void access_contact_database() {
-        struct Contact contact;
-        FILE *fptr;
-        fptr = fopen("ContactDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Contacts in the database:\n");
-        while (fscanf(fptr, "Name: %s\nPhone: %s\nEmail: %s\n\n", 
-                      contact.name, contact.phone, contact.email) != EOF) {
-            printf("Name: %s, Phone: %s, Email: %s\n", 
-                   contact.name, contact.phone, contact.email);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_contact_database() {
-        access_contact_database();
-    }
-
-    int choice;
-    printf("Contact Managment Database\n");
-    printf("1. Add Contact\n");
-    printf("2. Access Contact Database\n");
-    printf("3. Display Contact Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_contact();
-            break;
-        case 2:
-            access_contact_database();
-            break;
-        case 3:
-            display_contact_database();
-            break;
-        case 4:
-            printf("Exiting Contact Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-void Restaurant_Managment() {
-    struct Restaurant {
-        char name[50];
-        char location[50];
-        char cuisine[50];
-        int rating;
-    };
-
-    void add_restaurant() {
-        struct Restaurant restaurant;
-        FILE *fptr;
-        fptr = fopen("RestaurantDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter restaurant name: ");
-        scanf("%s", restaurant.name);
-        printf("Enter restaurant location: ");
-        scanf("%s", restaurant.location);
-        printf("Enter restaurant cuisine: ");
-        scanf("%s", restaurant.cuisine);
-        printf("Enter restaurant rating (1-5): ");
-        scanf("%d", &restaurant.rating);
-
-        fprintf(fptr, "Name: %s\nLocation: %s\nCuisine: %s\nRating: %d\n\n", 
-                restaurant.name, restaurant.location, restaurant.cuisine, restaurant.rating);
-        fclose(fptr);
-        printf("Restaurant record added successfully\n");
-    }
-
-    void access_restaurant_database() {
-        struct Restaurant restaurant;
-        FILE *fptr;
-        fptr = fopen("RestaurantDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Restaurants in the database:\n");
-        while (fscanf(fptr, "Name: %s\nLocation: %s\nCuisine: %s\nRating: %d\n\n", 
-                      restaurant.name, restaurant.location, restaurant.cuisine, &restaurant.rating) != EOF) {
-            printf("Name: %s, Location: %s, Cuisine: %s, Rating: %d\n", 
-                   restaurant.name, restaurant.location, restaurant.cuisine, restaurant.rating);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_restaurant_database() {
-        access_restaurant_database();
-    }
-
-    int choice;
-    printf("Restaurant Managment Database\n");
-    printf("1. Add Restaurant\n");
-    printf("2. Access Restaurant Database\n");
-    printf("3. Display Restaurant Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_restaurant();
-            break;
-        case 2:
-            access_restaurant_database();
-            break;
-        case 3:
-            display_restaurant_database();
-            break;
-        case 4:
-            printf("Exiting Restaurant Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-void Hotel_Managment() {
-    struct Hotel {
-        char name[50];
-        char location[50];
-        int rooms_available;
-        float price_per_night;
-    };
-
-    void add_hotel() {
-        struct Hotel hotel;
-        FILE *fptr;
-        fptr = fopen("HotelDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter hotel name: ");
-        scanf("%s", hotel.name);
-        printf("Enter hotel location: ");
-        scanf("%s", hotel.location);
-        printf("Enter number of rooms available: ");
-        scanf("%d", &hotel.rooms_available);
-        printf("Enter price per night: ");
-        scanf("%f", &hotel.price_per_night);
-
-        fprintf(fptr, "Name: %s\nLocation: %s\nRooms Available: %d\nPrice per Night: %.2f\n\n", 
-                hotel.name, hotel.location, hotel.rooms_available, hotel.price_per_night);
-        fclose(fptr);
-        printf("Hotel record added successfully\n");
-    }
-
-    void access_hotel_database() {
-        struct Hotel hotel;
-        FILE *fptr;
-        fptr = fopen("HotelDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Hotels in the database:\n");
-        while (fscanf(fptr, "Name: %s\nLocation: %s\nRooms Available: %d\nPrice per Night: %f\n\n", 
-                      hotel.name, hotel.location, &hotel.rooms_available, &hotel.price_per_night) != EOF) {
-            printf("Name: %s, Location: %s, Rooms Available: %d, Price per Night: %.2f\n", 
-                   hotel.name, hotel.location, hotel.rooms_available, hotel.price_per_night);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_hotel_database() {
-        access_hotel_database();
-    }
-
-    int choice;
-    printf("Hotel Managment Database\n");
-    printf("1. Add Hotel\n");
-    printf("2. Access Hotel Database\n");
-    printf("3. Display Hotel Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_hotel();
-            break;
-        case 2:
-            access_hotel_database();
-            break;
-        case 3:
-            display_hotel_database();
-            break;
-        case 4:
-            printf("Exiting Hotel Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-void Car_Managment() {
-    struct Car {
-        char model[50];
-        char manufacturer[50];
-        int year;
-        float price;
-    };
-
-    void add_car() {
-        struct Car car;
-        FILE *fptr;
-        fptr = fopen("CarDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter car model: ");
-        scanf("%s", car.model);
-        printf("Enter car manufacturer: ");
-        scanf("%s", car.manufacturer);
-        printf("Enter car year: ");
-        scanf("%d", &car.year);
-        printf("Enter car price: ");
-        scanf("%f", &car.price);
-
-        fprintf(fptr, "Model: %s\nManufacturer: %s\nYear: %d\nPrice: %.2f\n\n", 
-                car.model, car.manufacturer, car.year, car.price);
-        fclose(fptr);
-        printf("Car record added successfully\n");
-    }
-
-    void access_car_database() {
-        struct Car car;
-        FILE *fptr;
-        fptr = fopen("CarDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Cars in the database:\n");
-        while (fscanf(fptr, "Model: %s\nManufacturer: %s\nYear: %d\nPrice: %f\n\n", 
-                      car.model, car.manufacturer, &car.year, &car.price) != EOF) {
-            printf("Model: %s, Manufacturer: %s, Year: %d, Price: %.2f\n", 
-                   car.model, car.manufacturer, car.year, car.price);
-        }
-
-        fclose(fptr);
-    }
-
-    void display_car_database() {
-        access_car_database();
-    }
-
-    int choice;
-    printf("Car Managment Database\n");
-    printf("1. Add Car\n");
-    printf("2. Access Car Database\n");
-    printf("3. Display Car Database\n");
-    printf("4. Exit\n");
-    printf("5. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            add_car();
-            break;
-        case 2:
-            access_car_database();
-            break;
-        case 3:
-            display_car_database();
-            break;
-        case 4:
-            printf("Exiting Car Managment...\n");
-            break;
-        case 5:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-
-
-struct Book {
-    char title[50];
-    char author[50];
-    int available;
-    char due_date[20];
-    };
-
-void create_library_database() {
-    struct Book book;
-    FILE *fptr;
-    fptr = fopen("LibraryDatabase.txt", "a");
-    if (fptr == NULL) {
-        printf("Error opening file");
-        return;
-    }
-
-    printf("Enter the title of the book: ");
-    scanf("%49s", book.title);
-    printf("Enter the author of the book: ");
-    scanf("%49s", book.author);
-    book.available = 1;
-    strcpy(book.due_date, "N/A");
-
-    fprintf(fptr, "Title: %s\n", book.title);
-    fprintf(fptr, "Author: %s\n", book.author);
-    fprintf(fptr, "Available: %d\n", book.available);
-    fprintf(fptr, "Due Date: %s\n", book.due_date);
-    fprintf(fptr, "\n");
-
-    fclose(fptr);
-}
-void access_library_database() {
-    struct Book book;
-    FILE *fptr;
-    fptr = fopen("LibraryDatabase.txt", "r");
-    if (fptr == NULL) {
-        printf("Error opening file\n");
-        return;
-    }
-
-    printf("Books available in the library:\n");
-    while (fscanf(fptr, "Title: %s\n", book.title) != EOF) {
-        fscanf(fptr, "Author: %s\n", book.author);
-        fscanf(fptr, "Available: %d\n", &book.available);
-        fscanf(fptr, "Due Date: %s\n", book.due_date);
-        printf("Title: %s, Author: %s, Available: %d, Due Date: %s\n", book.title, book.author, book.available, book.due_date);
-    }
-
-    fclose(fptr);
-}
-void issue_book() {
-    struct Book book;
-    FILE *fptr;
-    FILE *temp;
-    char title[50];
-    int found = 0;
-
-    fptr = fopen("LibraryDatabase.txt", "r");
-    temp = fopen("TempLibraryDatabase.txt", "w");
-    if (fptr == NULL || temp == NULL) {
-        printf("Error opening file\n");
-        return;
-    }
-
-    printf("Enter the title of the book to issue: ");
-    scanf("%s", title);
-
-    while (fscanf(fptr, "Title: %s\n", book.title) != EOF) {
-        fscanf(fptr, "Author: %s\n", book.author);
-        fscanf(fptr, "Available: %d\n", &book.available);
-        fscanf(fptr, "Due Date: %s\n", book.due_date);
-
-        if (strcmp(book.title, title) == 0 && book.available == 1) {
-            book.available = 0;
-            printf("Enter the due date (dd-mm-yyyy): ");
-            scanf("%s", book.due_date);
-            found = 1;
-        }
-
-        fprintf(temp, "Title: %s\n", book.title);
-        fprintf(temp, "Author: %s\n", book.author);
-        fprintf(temp, "Available: %d\n", book.available);
-        fprintf(temp, "Due Date: %s\n", book.due_date);
-        fprintf(temp, "\n");
-    }
-
-    fclose(fptr);
-    fclose(temp);
-
-    remove("LibraryDatabase.txt");
-    rename("TempLibraryDatabase.txt", "LibraryDatabase.txt");
-
-    if (found) {
-        printf("Book issued successfully\n");
-    } else {
-        printf("Book not available or already issued\n");
-    }
-}
-void Library_Managment() {
-    int choice;
-    printf("Library Managment Database\n");
-    printf("1. Access Library Database\n");
-    printf("2. Issue Book\n");
-    printf("3. Exit\n");
-    printf("4. Return to Pre Made Libraries\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-
-    switch(choice) {
-        case 1:
-            access_library_database();
-            break;
-        case 2:
-            issue_book();
-            break;
-        case 3:
-            printf("Exiting Library Managment...\n");
-            break;
-        case 4:
-            pre_made_libraries();
-            break;
-        default:
-            printf("Invalid choice\n");
-    }
-}
-
-    struct Train {
-        char name[50];
-        int number;
-        char time[20];
-        char date[20];
-        char location[50];
-    };
-
-    struct Ticket {
-        char personal_id[20];
-        char train_name[50];
-        float ticket_price;
-    };
-
-void create_or_modify_train_chart() {
-        FILE *fptr;
-        struct Train train;
-        int choice;
-        char modify_name[50];
-        int modify_number;
-        int found = 0;
-
-        fptr = fopen("TicketDatabase.txt", "a+");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("1. Create new train chart\n2. Modify existing train chart\nEnter your choice: ");
-        scanf("%d", &choice);
-
-        if (choice == 1) {
-            printf("Enter train name: ");
-            scanf("%s", train.name);
-            printf("Enter train number: ");
-            scanf("%d", &train.number);
-            printf("Enter time: ");
-            scanf("%s", train.time);
-            printf("Enter date: ");
-            scanf("%s", train.date);
-            printf("Enter location: ");
-            scanf("%s", train.location);
-
-            fprintf(fptr, "Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, train.number, train.time, train.date, train.location);
-            printf("Train chart created successfully\n");
-        } else if (choice == 2) {
-            FILE *temp = fopen("TempTicketDatabase.txt", "w");
-            if (temp == NULL) {
-                printf("Error opening temporary file\n");
-                fclose(fptr);
-                return;
-            }
-
-            printf("Enter train name or number to modify: ");
-            scanf("%s", modify_name);
-
-            while (fscanf(fptr, "Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, &train.number, train.time, train.date, train.location) != EOF) {
-                if (strcmp(train.name, modify_name) == 0 || train.number == atoi(modify_name)) {
-                    found = 1;
-                    printf("Enter new train name: ");
-                    scanf("%s", train.name);
-                    printf("Enter new train number: ");
-                    scanf("%d", &train.number);
-                    printf("Enter new time: ");
-                    scanf("%s", train.time);
-                    printf("Enter new date: ");
-                    scanf("%s", train.date);
-                    printf("Enter new location: ");
-                    scanf("%s", train.location);
-                }
-                fprintf(temp, "Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, train.number, train.time, train.date, train.location);
-            }
-
+        
+        if (fprintf(fptr, "%s\n%s\n", new_login_id, new_password) < 0) {
+            printf("Error writing credentials\n");
             fclose(fptr);
-            fclose(temp);
-
-            remove("TicketDatabase.txt");
-            rename("TempTicketDatabase.txt", "TicketDatabase.txt");
-
-            if (found) {
-                printf("Train chart modified successfully\n");
-            } else {
-                printf("Train not found\n");
-            }
-        } else {
-            printf("Invalid choice\n");
+            return 0;
         }
-    }
-
-void access_ticket_database() {
-        FILE *fptr;
-        struct Train train;
-        fptr = fopen("TicketDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Train Chart:\n");
-        while (fscanf(fptr, "Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, &train.number, train.time, train.date, train.location) != EOF) {
-            printf("Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, train.number, train.time, train.date, train.location);
-        }
-
+        
         fclose(fptr);
+        printf("Registration successful! Please login with your new credentials.\n");
+        return login_or_register(); // Recursive call to login after registration
+    } else {
+        printf("Invalid choice\n");
+        return 0;
     }
-
-void search_train() {
-        FILE *fptr;
-        struct Train train;
-        char search_name[50];
-        int search_number;
-        int choice;
-        int found = 0;
-
-        fptr = fopen("TicketDatabase.txt", "r");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Search by:\n1. Train Name\n2. Train Number\nEnter your choice: ");
-        scanf("%d", &choice);
-
-        if (choice == 1) {
-            printf("Enter train name: ");
-            scanf("%s", search_name);
-            while (fscanf(fptr, "Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, &train.number, train.time, train.date, train.location) != EOF) {
-                if (strcmp(train.name, search_name) == 0) {
-                    printf("Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, train.number, train.time, train.date, train.location);
-                    found = 1;
-                }
-            }
-        } else if (choice == 2) {
-            printf("Enter train number: ");
-            scanf("%d", &search_number);
-            while (fscanf(fptr, "Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, &train.number, train.time, train.date, train.location) != EOF) {
-                if (train.number == search_number) {
-                    printf("Name: %s\nNumber: %d\nTime: %s\nDate: %s\nLocation: %s\n\n", train.name, train.number, train.time, train.date, train.location);
-                    found = 1;
-                }
-            }
-        } else {
-            printf("Invalid choice\n");
-        }
-
-        if (!found) {
-            printf("Train not found\n");
-        }
-
-        fclose(fptr);
-    }
-
-    void buy_ticket() {
-        FILE *fptr;
-        struct Ticket ticket;
-
-        fptr = fopen("TicketDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter personal ID: ");
-        scanf("%s", ticket.personal_id);
-        printf("Enter train name: ");
-        scanf("%s", ticket.train_name);
-        printf("Enter ticket price: ");
-        scanf("%f", &ticket.ticket_price);
-
-        fprintf(fptr, "Personal ID: %s\nTrain Name: %s\nTicket Price: %.2f\n\n", ticket.personal_id, ticket.train_name, ticket.ticket_price);
-
-        fclose(fptr);
-        printf("Ticket bought successfully\n");
-    }
-
-    void cancel_ticket() {
-        FILE *fptr, *temp;
-        struct Ticket ticket;
-        char personal_id[20];
-        int found = 0;
-
-        fptr = fopen("TicketDatabase.txt", "r");
-        temp = fopen("TempTicketDatabase.txt", "w");
-        if (fptr == NULL || temp == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter personal ID to cancel ticket: ");
-        scanf("%s", personal_id);
-
-        while (fscanf(fptr, "Personal ID: %s\nTrain Name: %s\nTicket Price: %f\n\n", ticket.personal_id, ticket.train_name, &ticket.ticket_price) != EOF) {
-            if (strcmp(ticket.personal_id, personal_id) == 0) {
-                found = 1;
-            } else {
-                fprintf(temp, "Personal ID: %s\nTrain Name: %s\nTicket Price: %.2f\n\n", ticket.personal_id, ticket.train_name, ticket.ticket_price);
-            }
-        }
-
-        fclose(fptr);
-        fclose(temp);
-
-        remove("TicketDatabase.txt");
-        rename("TempTicketDatabase.txt", "TicketDatabase.txt");
-
-        if (found) {
-            printf("Ticket cancelled successfully\n");
-        } else {
-            printf("Ticket not found\n");
-        }
-    }
-
-    void Ticket_Managment() {
-        int choice;
-        printf("Ticket Managment Database\n");
-        printf("1. Create or Modify Train Chart\n");
-        printf("2. Access Ticket Database\n");
-        printf("3. Search Train\n");
-        printf("4. Buy Ticket\n");
-        printf("5. Cancel Ticket\n");
-        printf("6. Exit\n");
-        printf("7. Return to Pre Made Libraries\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        switch(choice) {
-            case 1:
-                create_or_modify_train_chart();
-                break;
-            case 2:
-                access_ticket_database();
-                break;
-            case 3:
-                search_train();
-                break;
-            case 4:
-                buy_ticket();
-                break;
-            case 5:
-                cancel_ticket();
-                break;
-            case 6:
-                printf("Exiting Ticket Managment...\n");
-                break;
-            case 7:
-                pre_made_libraries();
-                break;
-            default:
-                printf("Invalid choice\n");
-        }
-    }
-
-
-void Student_Managment() {
-    struct Attendance {
-        char class_name[50];
-        char student_name[50];
-        int roll_no;
-        char date[20];
-        char attendance[10];
-    };
-
-    struct MarksRecord {
-        char name[50];
-        char subject[50];
-        int marks_obtained;
-        char exam_name[50];
-    };
-
-    struct Fees {
-        char name_student[50];
-        char fees_details[20];
-    };
-
-    void add_attendance() {
-        struct Attendance attendance;
-        FILE *fptr;
-        fptr = fopen("AttendanceDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter class name: ");
-        scanf("%s", attendance.class_name);
-        printf("Enter student name: ");
-        scanf("%s", attendance.student_name);
-        printf("Enter roll number: ");
-        scanf("%d", &attendance.roll_no);
-        printf("Enter date (dd-mm-yyyy): ");
-        scanf("%s", attendance.date);
-        printf("Enter attendance (Present/Absent): ");
-        scanf("%s", attendance.attendance);
-
-        fprintf(fptr, "Class: %s\nStudent: %s\nRoll No: %d\nDate: %s\nAttendance: %s\n\n", 
-                attendance.class_name, attendance.student_name, attendance.roll_no, 
-                attendance.date, attendance.attendance);
-        fclose(fptr);
-        printf("Attendance record added successfully\n");
-    }
-
-    void add_marks_record() {
-        struct MarksRecord marks;
-        FILE *fptr;
-        fptr = fopen("MarksDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter student name: ");
-        scanf("%s", marks.name);
-        printf("Enter subject: ");
-        scanf("%s", marks.subject);
-        printf("Enter marks obtained: ");
-        scanf("%d", &marks.marks_obtained);
-        printf("Enter exam name: ");
-        scanf("%s", marks.exam_name);
-
-        fprintf(fptr, "Name: %s\nSubject: %s\nMarks Obtained: %d\nExam Name: %s\n\n", 
-                marks.name, marks.subject, marks.marks_obtained, marks.exam_name);
-        fclose(fptr);
-        printf("Marks record added successfully\n");
-    }
-
-    void add_fees_record() {
-        struct Fees fees;
-        FILE *fptr;
-        fptr = fopen("FeesDatabase.txt", "a");
-        if (fptr == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter student name: ");
-        scanf("%s", fees.name_student);
-        printf("Enter fees details (Paid/Left to pay): ");
-        scanf("%s", fees.fees_details);
-
-        fprintf(fptr, "Name: %s\nFees Details: %s\n\n", fees.name_student, fees.fees_details);
-        fclose(fptr);
-        printf("Fees record added successfully\n");
-    }
-
-    void modify_fees() {
-        struct Fees fees;
-        FILE *fptr, *temp;
-        char student_name[50];
-        int found = 0;
-
-        fptr = fopen("FeesDatabase.txt", "r");
-        temp = fopen("TempFeesDatabase.txt", "w");
-        if (fptr == NULL || temp == NULL) {
-            printf("Error opening file\n");
-            return;
-        }
-
-        printf("Enter the name of the student to modify fees: ");
-        scanf("%s", student_name);
-
-        while (fscanf(fptr, "Name: %s\nFees Details: %s\n\n", fees.name_student, fees.fees_details) != EOF) {
-            if (strcmp(fees.name_student, student_name) == 0) {
-                found = 1;
-                printf("Enter new fees details: ");
-                scanf("%s", fees.fees_details);
-            }
-            fprintf(temp, "Name: %s\nFees Details: %s\n\n", fees.name_student, fees.fees_details);
-        }
-
-        fclose(fptr);
-        fclose(temp);
-
-        remove("FeesDatabase.txt");
-        rename("TempFeesDatabase.txt", "FeesDatabase.txt");
-
-        if (found) {
-            printf("Fees details modified successfully\n");
-        } else {
-            printf("Student not found\n");
-        }
-    }
-
-    int choice;
-    do {
-        printf("\nStudent Managment System\n");
-        printf("1. Add Attendance Record\n");
-        printf("2. Add Marks Record\n");
-        printf("3. Add Fees Record\n");
-        printf("4. Modify Fees Record\n");
-        printf("5. Return to Main Menu\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        switch(choice) {
-            case 1:
-                add_attendance();
-                break;
-            case 2:
-                add_marks_record();
-                break;
-            case 3:
-                add_fees_record();
-                break;
-            case 4:
-                modify_fees();
-                break;
-            case 5:
-                printf("Returning to main menu...\n");
-                break;
-            default:
-                printf("Invalid choice\n");
-        }
-    } while(choice != 5);
 }
 
 // Function to sort table based on a column
@@ -1705,288 +436,409 @@ void test_table_sorting() {
     display_sorted_table(&test_table);
 }
 
-void Modify_Table(){
-    struct Table table;
-    FILE *fptr;
-    fptr = fopen("Database.txt", "r+");
+void Modify_Table(void) {
+    char database_name[MAX_DB_NAME];
+    printf("\nEnter database name: ");
+    scanf("%49s", database_name);
+
+    char table_name[MAX_STR_LEN];
+    printf("Enter table name: ");
+    scanf("%49s", table_name);
+
+    char table_filename[MAX_STR_LEN];
+    snprintf(table_filename, sizeof(table_filename), "%s_%s.txt", database_name, table_name);
+
+    FILE *fptr = fopen(table_filename, "r");
     if (fptr == NULL) {
-        printf("Error opening file\n");
+        printf("Table does not exist\n");
         return;
     }
 
-    printf("Enter the name of the table to modify: ");
-    scanf("%s", table.name);
-
-    // Read the table details from the file
-    while (fscanf(fptr, "Table Name: %s\n", table.name) != EOF) {
-        fscanf(fptr, "Rows: %d, Columns: %d\n", &table.rows, &table.columns);
-        fscanf(fptr, "Row Names: ");
-        for (int i = 0; i < table.rows; i++) {
-            fscanf(fptr, "%s", table.row_names[i]);
-        }
-        fscanf(fptr, "Column Names: ");
-        for (int i = 0; i < table.columns; i++) {
-            fscanf(fptr, "%s", table.column_names[i]);
-        }
-
-        // Check if this is the table to modify
-        if (strcmp(table.name, table.name) == 0) {
-            break;
-        }
-    }
-
-    // Modify the table
-    int row_index, column_index;
-    char new_value[50];
-    printf("Enter the row index to modify (0-%d): ", table.rows - 1);
-    scanf("%d", &row_index);
-    printf("Enter the column index to modify (0-%d): ", table.columns - 1);
-    scanf("%d", &column_index);
-    printf("Enter the new value: ");
-    scanf("%s", new_value);
-
-    // Update the table in memory
-    strcpy(table.row_names[row_index], new_value);
-    strcpy(table.column_names[column_index], new_value);
-
-    // Write the updated table back to the file
-    fseek(fptr, 0, SEEK_SET);
-    fprintf(fptr, "Table Name: %s\n", table.name);
-    fprintf(fptr, "Rows: %d, Columns: %d\n", table.rows, table.columns);
-    fprintf(fptr, "Row Names: ");
-    for (int i = 0; i < table.rows; i++) {
-        fprintf(fptr, "%s ", table.row_names[i]);
-    }
-    fprintf(fptr, "\nColumn Names: ");
+    struct Table table;
+    fscanf(fptr, "Table: %s\nRows: %d\nColumns: %d\n\n", table.name, &table.rows, &table.columns);
+    
+    // Read column names and types
+    fscanf(fptr, "Column Names: ");
     for (int i = 0; i < table.columns; i++) {
-        fprintf(fptr, "%s ", table.column_names[i]);
+        fscanf(fptr, "%s", table.column_names[i]);
     }
-    fprintf(fptr, "\n");
+    fscanf(fptr, "\nColumn Types: ");
+    for (int i = 0; i < table.columns; i++) {
+        fscanf(fptr, " %c", &table.column_types[i]);
+    }
 
+    // Read data
+    fscanf(fptr, "\n\nData:\n");
+    for (int i = 0; i < table.rows; i++) {
+        for (int j = 0; j < table.columns; j++) {
+            switch(table.column_types[j]) {
+                case 'i':
+                    fscanf(fptr, "%d", &table.data[i][j].int_value);
+                    break;
+                case 'f':
+                    fscanf(fptr, "%f", &table.data[i][j].float_value);
+                    break;
+                case 's':
+                    fscanf(fptr, "%s", table.data[i][j].str_value);
+                    break;
+            }
+        }
+    }
     fclose(fptr);
+
+    // Display current table data
+    printf("\nCurrent table data:\n");
+    display_sorted_table(&table);
+
+    // Modification options
+    int choice;
+    do {
+        printf("\nModification options:\n");
+        printf("1. Modify specific cell\n");
+        printf("2. Sort table by column\n");
+        printf("3. Save and exit\n");
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        switch(choice) {
+            case 1: {
+                int row, col;
+                printf("Enter row index (0-%d): ", table.rows - 1);
+                scanf("%d", &row);
+                printf("Enter column index (0-%d): ", table.columns - 1);
+                scanf("%d", &col);
+
+                if (row >= 0 && row < table.rows && col >= 0 && col < table.columns) {
+                    printf("Enter new value for %s (%c): ", table.column_names[col], table.column_types[col]);
+                    switch(table.column_types[col]) {
+                        case 'i':
+                            scanf("%d", &table.data[row][col].int_value);
+                            break;
+                        case 'f':
+                            scanf("%f", &table.data[row][col].float_value);
+                            break;
+                        case 's':
+                            scanf("%49s", table.data[row][col].str_value);
+                            break;
+                    }
+                    printf("Cell modified successfully!\n");
+                } else {
+                    printf("Invalid indices!\n");
+                }
+                break;
+            }
+            case 2: {
+                int col, ascending;
+                printf("Enter column index to sort (0-%d): ", table.columns - 1);
+                scanf("%d", &col);
+                printf("Sort order (1-ascending, 0-descending): ");
+                scanf("%d", &ascending);
+                if (col >= 0 && col < table.columns) {
+                    sort_table(&table, col, ascending);
+                    printf("\nSorted table:\n");
+                    display_sorted_table(&table);
+                } else {
+                    printf("Invalid column index!\n");
+                }
+                break;
+            }
+            case 3: {
+                // Save modified table
+                fptr = fopen(table_filename, "w");
+                if (fptr == NULL) {
+                    printf("Error saving table\n");
+                    return;
+                }
+                fprintf(fptr, "Table: %s\nRows: %d\nColumns: %d\n\n", table.name, table.rows, table.columns);
+                fprintf(fptr, "Column Names: ");
+                for (int i = 0; i < table.columns; i++) {
+                    fprintf(fptr, "%s ", table.column_names[i]);
+                }
+                fprintf(fptr, "\nColumn Types: ");
+                for (int i = 0; i < table.columns; i++) {
+                    fprintf(fptr, "%c ", table.column_types[i]);
+                }
+                fprintf(fptr, "\n\nData:\n");
+
+                for (int i = 0; i < table.rows; i++) {
+                    for (int j = 0; j < table.columns; j++) {
+                        switch(table.column_types[j]) {
+                            case 'i':
+                                fprintf(fptr, "%d ", table.data[i][j].int_value);
+                                break;
+                            case 'f':
+                                fprintf(fptr, "%.2f ", table.data[i][j].float_value);
+                                break;
+                            case 's':
+                                fprintf(fptr, "%s ", table.data[i][j].str_value);
+                                break;
+                        }
+                    }
+                    fprintf(fptr, "\n");
+                }
+                fclose(fptr);
+                printf("Table saved successfully!\n");
+                break;
+            }
+            default:
+                printf("Invalid choice!\n");
+        }
+    } while (choice != 3);
 }
 
-void show_existing_databases() {
-    FILE *fptr;
-    char database_name[50];
+void show_existing_databases(void) {
+    DIR *d;
+    struct dirent *dir;
     int count = 0;
     
-    printf("\nExisting Databases:\n");
-    printf("------------------\n");
-    
-    // Open the directory listing file
-    fptr = fopen("databases.txt", "r");
-    if (fptr == NULL) {
-        printf("No databases found\n");
+    d = opendir(".");
+    if (d == NULL) {
+        printf("Error accessing directory\n");
         return;
     }
-    
-    while (fscanf(fptr, "%s", database_name) != EOF) {
-        count++;
-        printf("%d. %s\n", count, database_name);
+
+    printf("\nExisting Databases:\n");
+    while ((dir = readdir(d)) != NULL) {
+        if (strstr(dir->d_name, ".txt") != NULL) {
+            char *name = strdup(dir->d_name);
+            if (name) {
+                name[strlen(name) - 4] = '\0'; // Remove .txt extension
+                printf("%d. %s\n", ++count, name);
+                free(name);
+            }
+        }
     }
-    
+    closedir(d);
+
     if (count == 0) {
-        printf("No databases found\n");
+        printf("No databases found.\n");
     }
-    
-    fclose(fptr);
 }
 
 void create_table_in_database(char *database_name) {
-    struct Table table;
-    FILE *fptr;
-    fptr = fopen(database_name, "a");
-    if (fptr == NULL) {
-        printf("Error opening file");
+    if (!is_valid_database_name(database_name)) {
+        printf("Invalid database name\n");
         return;
     }
 
-    printf("Enter the name of the table: ");
-    scanf("%s", table.name);
-    printf("Enter the number of rows: ");
-    scanf("%d", &table.rows);
-    printf("Enter the number of columns: ");
-    scanf("%d", &table.columns);
+    char filename[MAX_DB_NAME + 4];
+    snprintf(filename, sizeof(filename), "%s.txt", database_name);
 
-    for (int i = 0; i < table.rows; i++) {
-        printf("Enter the name of row %d: ", i + 1);
-        scanf("%s", table.row_names[i]);
-    }
-
-    for (int i = 0; i < table.columns; i++) {
-        printf("Enter the name of column %d: ", i + 1);
-        scanf("%s", table.column_names[i]);
-    }
-
-    fprintf(fptr, "Table Name: %s\n", table.name);
-    fprintf(fptr, "Rows: %d, Columns: %d\n", table.rows, table.columns);
-    fprintf(fptr, "Row Names: ");
-    for (int i = 0; i < table.rows; i++) {
-        fprintf(fptr, "%s ", table.row_names[i]);
-    }
-    fprintf(fptr, "\nColumn Names: ");
-    for (int i = 0; i < table.columns; i++) {
-        fprintf(fptr, "%s ", table.column_names[i]);
-    }
-    fprintf(fptr, "\n");
-
-    fclose(fptr);
-}
-
-void create_database() {
-    char database_name[50];
-    FILE *fptr, *list_fptr;
-
-    printf("Enter the name of the database to create: ");
-    scanf("%s", database_name);
-
-    fptr = fopen(database_name, "w");
-    if (fptr == NULL) {
-        printf("Error creating database");
-        return;
-    }
-    
-    // Add to databases list
-    list_fptr = fopen("databases.txt", "a");
-    if (list_fptr != NULL) {
-        fprintf(list_fptr, "%s\n", database_name);
-        fclose(list_fptr);
-    }
-    
-    printf("Database created successfully\n");
-    fclose(fptr);
-}
-
-int show_tables_in_database(char *database_name) {
-    FILE *fptr;
-    char line[256];
-    int table_count = 0;
-    
-    fptr = fopen(database_name, "r");
-    if (fptr == NULL) {
-        printf("Error opening database\n");
-        return;
-    }
-    
-    printf("\nTables in database %s:\n", database_name);
-    printf("-------------------------\n");
-    
-    while (fgets(line, sizeof(line), fptr)) {
-        if (strstr(line, "Table Name: ") != NULL) {
-            table_count++;
-            printf("%d. %s", table_count, line + 11); // Skip "Table Name: "
-        }
-    }
-    
-    if (table_count == 0) {
-        printf("No tables found in database\n");
-    }
-    
-    fclose(fptr);
-    return table_count;
-}
-
-void modify_existing_table(char *database_name) {
-    FILE *fptr, *temp;
-    char line[256], table_name[50];
-    int found = 0;
-    
-    printf("Enter the name of the table to modify: ");
-    scanf("%s", table_name);
-    
-    fptr = fopen(database_name, "r");
-    temp = fopen("temp.txt", "w");
-    
-    if (fptr == NULL || temp == NULL) {
-        printf("Error opening files\n");
-        return;
-    }
-    
-    // Copy content until we find the table
-    while (fgets(line, sizeof(line), fptr)) {
-        if (strstr(line, "Table Name: ") != NULL && strstr(line, table_name) != NULL) {
-            found = 1;
-            fprintf(temp, "%s", line); // Write the table name line
-            
-            // Read and write rows and columns line
-            fgets(line, sizeof(line), fptr);
-            fprintf(temp, "%s", line);
-            
-            // Read row names line
-            fgets(line, sizeof(line), fptr);
-            printf("\nCurrent row names: %s", line);
-            printf("Enter new row names (space-separated): ");
-            getchar(); // Clear input buffer
-            fgets(line, sizeof(line), stdin);
-            fprintf(temp, "Row Names: %s", line);
-            
-            // Read column names line
-            fgets(line, sizeof(line), fptr);
-            printf("Current column names: %s", line);
-            printf("Enter new column names (space-separated): ");
-            fgets(line, sizeof(line), stdin);
-            fprintf(temp, "Column Names: %s", line);
-        } else {
-            fprintf(temp, "%s", line);
-        }
-    }
-    
-    fclose(fptr);
-    fclose(temp);
-    
-    if (found) {
-        remove(database_name);
-        rename("temp.txt", database_name);
-        printf("Table modified successfully\n");
-    } else {
-        remove("temp.txt");
-        printf("Table not found\n");
-    }
-}
-
-void access_database() {
-    char database_name[50];
-    FILE *fptr;
-    int choice;
-
-    printf("Enter the name of the database to access: ");
-    scanf("%s", database_name);
-
-    fptr = fopen(database_name, "r");
+    FILE *fptr = fopen(filename, "r");
     if (fptr == NULL) {
         printf("Database does not exist\n");
         return;
     }
-    printf("Database accessed successfully\n");
     fclose(fptr);
 
+    char table_name[MAX_STR_LEN];
+    int rows, cols;
+
+    printf("Enter table name: ");
+    if (scanf("%49s", table_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    printf("Enter number of rows (max %d): ", MAX_ROWS);
+    if (scanf("%d", &rows) != 1 || rows <= 0 || rows > MAX_ROWS) {
+        printf("Invalid number of rows\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    printf("Enter number of columns (max %d): ", MAX_COLS);
+    if (scanf("%d", &cols) != 1 || cols <= 0 || cols > MAX_COLS) {
+        printf("Invalid number of columns\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    // Create table file
+    char table_filename[MAX_STR_LEN];
+    snprintf(table_filename, sizeof(table_filename), "%s_%s.txt", database_name, table_name);
+    
+    fptr = fopen(table_filename, "w");
+    if (fptr == NULL) {
+        printf("Error creating table\n");
+        return;
+    }
+
+    fprintf(fptr, "Table: %s\nRows: %d\nColumns: %d\n\n", table_name, rows, cols);
+    fclose(fptr);
+
+    // Update database file to include the new table
+    fptr = fopen(filename, "a");
+    if (fptr == NULL) {
+        printf("Error updating database\n");
+        return;
+    }
+
+    fprintf(fptr, "%s\n", table_name);
+    fclose(fptr);
+    printf("Table created successfully!\n");
+}
+
+int show_tables_in_database(char *database_name) {
+    if (!is_valid_database_name(database_name)) {
+        printf("Invalid database name\n");
+        return 0;
+    }
+
+    char filename[MAX_DB_NAME + 4];
+    snprintf(filename, sizeof(filename), "%s.txt", database_name);
+
+    FILE *fptr = fopen(filename, "r");
+    if (fptr == NULL) {
+        printf("Database does not exist\n");
+        return 0;
+    }
+
+    char line[MAX_STR_LEN];
+    int found_tables = 0;
+    int count = 0;
+
+    // Skip database name line
+    if (fgets(line, sizeof(line), fptr) == NULL) {
+        printf("Error reading database file\n");
+        fclose(fptr);
+        return 0;
+    }
+
+    // Skip "Tables:" line
+    if (fgets(line, sizeof(line), fptr) == NULL) {
+        printf("Error reading database file\n");
+        fclose(fptr);
+        return 0;
+    }
+
+    printf("\nTables in database '%s':\n", database_name);
+    while (fgets(line, sizeof(line), fptr) != NULL) {
+        line[strcspn(line, "\n")] = 0; // Remove newline
+        if (strlen(line) > 0) {
+            printf("%d. %s\n", ++count, line);
+            found_tables = 1;
+        }
+    }
+
+    fclose(fptr);
+    if (!found_tables) {
+        printf("No tables found in the database.\n");
+    }
+    return found_tables;
+}
+
+void modify_existing_table(char *database_name) {
+    if (!show_tables_in_database(database_name)) {
+        return;
+    }
+
+    char table_name[MAX_STR_LEN];
+    printf("\nEnter table name to modify: ");
+    if (scanf("%49s", table_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    char table_filename[MAX_STR_LEN];
+    snprintf(table_filename, sizeof(table_filename), "%s_%s.txt", database_name, table_name);
+
+    FILE *fptr = fopen(table_filename, "r");
+    if (fptr == NULL) {
+        printf("Table does not exist\n");
+        return;
+    }
+    fclose(fptr);
+
+    printf("Table modification will be implemented in a future update.\n");
+}
+
+int access_database(void) {
+    char database_name[MAX_DB_NAME];
+    
+    show_existing_databases();
+    
+    printf("\nEnter database name to access: ");
+    if (scanf("%49s", database_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return -1;
+    }
+
+    if (!is_valid_database_name(database_name)) {
+        printf("Invalid database name\n");
+        return -1;
+    }
+
+    char filename[MAX_DB_NAME + 4];
+    snprintf(filename, sizeof(filename), "%s.txt", database_name);
+
+    FILE *fptr = fopen(filename, "r");
+    if (fptr == NULL) {
+        printf("Database does not exist\n");
+        return -1;
+    }
+
+    // Check if database is empty
+    fseek(fptr, 0, SEEK_END);
+    if (ftell(fptr) == 0) {
+        printf("Database is empty\n");
+        fclose(fptr);
+        return -1;
+    }
+    fseek(fptr, 0, SEEK_SET);
+
+    int choice;
     do {
-        printf("\nDatabase Operations:\n");
-        printf("1. Show Tables\n");
-        printf("2. Create Table\n");
-        printf("3. Modify Table\n");
-        printf("4. Return to Main Menu\n");
+        printf("\n========== Database: %s ==========\n", database_name);
+        printf("1. Show tables\n");
+        printf("2. Create table\n");
+        printf("3. Input table data\n");
+        printf("4. Modify table\n");
+        printf("5. Display table data\n");
+        printf("6. Sort table\n");
+        printf("7. Back to main menu\n");
         printf("Enter your choice: ");
-        scanf("%d", &choice);
-        
-        switch(choice) {
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
             case 1:
-                show_tables_in_database(database_name);
+                if (!show_tables_in_database(database_name)) {
+                    printf("No tables found in the database.\n");
+                }
                 break;
             case 2:
                 create_table_in_database(database_name);
                 break;
             case 3:
-                modify_existing_table(database_name);
+                input_table_data(database_name);
                 break;
             case 4:
+                Modify_Table();
+                break;
+            case 5:
+                display_table_data(database_name);
+                break;
+            case 6:
+                sort_table_in_database(database_name);
+                break;
+            case 7:
                 printf("Returning to main menu...\n");
                 break;
             default:
                 printf("Invalid choice\n");
         }
-    } while(choice != 4);
+    } while (choice != 7);
+    
+    fclose(fptr);
+    return 0;
 }
 
 void Delete_Database() {
@@ -2058,6 +910,1035 @@ void Table_sorting() {
     fclose(fptr);
 }
 
+int pre_made_libraries(void) {
+    int choice;
+    do {
+        printf("\n========== Pre-defined Libraries ==========\n");
+        printf("1. Library Management System\n");
+        printf("2. Ticket Management System\n");
+        printf("3. Contact Management System\n");
+        printf("4. Office Management System\n");
+        printf("5. Student Management System\n");
+        printf("6. Back to main menu\n");
+        printf("Enter your choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                Library_Management();
+                break;
+            case 2:
+                Ticket_Management();
+                break;
+            case 3:
+                Contact_Management();
+                break;
+            case 4:
+                Office_Management();
+                break;
+            case 5:
+                Student_Management();
+                break;
+            case 6:
+                printf("Returning to main menu...\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 6);
+    return 0;
+}
+
+// Contact Management System
+void Contact_Management(void) {
+    int choice;
+    do {
+        printf("\n========== Contact Management System ==========\n");
+        printf("1. Add Contact\n");
+        printf("2. View Contacts\n");
+        printf("3. Search Contact\n");
+        printf("4. Delete Contact\n");
+        printf("5. Back to Libraries Menu\n");
+        printf("Enter your choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
+            case 1: {
+                struct Contact contact;
+                printf("Enter name: ");
+                scanf("%49s", contact.name);
+                printf("Enter phone: ");
+                scanf("%19s", contact.phone);
+                printf("Enter email: ");
+                scanf("%49s", contact.email);
+                printf("Enter address: ");
+                scanf("%99s", contact.address);
+
+                FILE *fptr = fopen("contacts.txt", "a");
+                if (fptr == NULL) {
+                    printf("Error opening file\n");
+                    return;
+                }
+                fprintf(fptr, "%s,%s,%s,%s\n", contact.name, contact.phone, contact.email, contact.address);
+                fclose(fptr);
+                printf("Contact added successfully!\n");
+                break;
+            }
+            case 2: {
+                FILE *fptr = fopen("contacts.txt", "r");
+                if (fptr == NULL) {
+                    printf("No contacts found\n");
+                    return;
+                }
+                printf("\nContacts:\n");
+                printf("Name\tPhone\tEmail\tAddress\n");
+                printf("----------------------------------------\n");
+                struct Contact contact;
+                while (fscanf(fptr, "%49[^,],%19[^,],%49[^,],%99[^\n]\n", 
+                    contact.name, contact.phone, contact.email, contact.address) != EOF) {
+                    printf("%s\t%s\t%s\t%s\n", contact.name, contact.phone, contact.email, contact.address);
+                }
+                fclose(fptr);
+                break;
+            }
+            case 3: {
+                char search_name[50];
+                printf("Enter name to search: ");
+                scanf("%49s", search_name);
+                
+                FILE *fptr = fopen("contacts.txt", "r");
+                if (fptr == NULL) {
+                    printf("No contacts found\n");
+                    return;
+                }
+                
+                struct Contact contact;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%19[^,],%49[^,],%99[^\n]\n", 
+                    contact.name, contact.phone, contact.email, contact.address) != EOF) {
+                    if (strcmp(contact.name, search_name) == 0) {
+                        printf("\nContact found:\n");
+                        printf("Name: %s\nPhone: %s\nEmail: %s\nAddress: %s\n", 
+                            contact.name, contact.phone, contact.email, contact.address);
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    printf("Contact not found\n");
+                }
+                fclose(fptr);
+                break;
+            }
+            case 4: {
+                char delete_name[50];
+                printf("Enter name to delete: ");
+                scanf("%49s", delete_name);
+                
+                FILE *fptr = fopen("contacts.txt", "r");
+                FILE *temp = fopen("temp.txt", "w");
+                if (fptr == NULL || temp == NULL) {
+                    printf("Error opening files\n");
+                    return;
+                }
+                
+                struct Contact contact;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%19[^,],%49[^,],%99[^\n]\n", 
+                    contact.name, contact.phone, contact.email, contact.address) != EOF) {
+                    if (strcmp(contact.name, delete_name) != 0) {
+                        fprintf(temp, "%s,%s,%s,%s\n", contact.name, contact.phone, contact.email, contact.address);
+                    } else {
+                        found = 1;
+                    }
+                }
+                
+                fclose(fptr);
+                fclose(temp);
+                
+                remove("contacts.txt");
+                rename("temp.txt", "contacts.txt");
+                
+                if (found) {
+                    printf("Contact deleted successfully\n");
+                } else {
+                    printf("Contact not found\n");
+                }
+                break;
+            }
+            case 5:
+                printf("Returning to libraries menu...\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 5);
+}
+
+// Office Management System
+void Office_Management(void) {
+    int choice;
+    do {
+        printf("\n========== Office Management System ==========\n");
+        printf("1. Add Employee\n");
+        printf("2. View Employees\n");
+        printf("3. Search Employee\n");
+        printf("4. Update Employee Details\n");
+        printf("5. Back to Libraries Menu\n");
+        printf("Enter your choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
+            case 1: {
+                struct Office employee;
+                printf("Enter department: ");
+                scanf("%49s", employee.department);
+                printf("Enter employee name: ");
+                scanf("%49s", employee.employee_name);
+                printf("Enter position: ");
+                scanf("%49s", employee.position);
+                printf("Enter salary: ");
+                scanf("%f", &employee.salary);
+                printf("Enter join date (DD/MM/YYYY): ");
+                scanf("%19s", employee.join_date);
+
+                FILE *fptr = fopen("office.txt", "a");
+                if (fptr == NULL) {
+                    printf("Error opening file\n");
+                    return;
+                }
+                fprintf(fptr, "%s,%s,%s,%.2f,%s\n", 
+                    employee.department, employee.employee_name, employee.position, 
+                    employee.salary, employee.join_date);
+                fclose(fptr);
+                printf("Employee added successfully!\n");
+                break;
+            }
+            case 2: {
+                FILE *fptr = fopen("office.txt", "r");
+                if (fptr == NULL) {
+                    printf("No employees found\n");
+                    return;
+                }
+                printf("\nEmployees:\n");
+                printf("Department\tName\tPosition\tSalary\tJoin Date\n");
+                printf("--------------------------------------------------------\n");
+                struct Office employee;
+                while (fscanf(fptr, "%49[^,],%49[^,],%49[^,],%f,%19[^\n]\n", 
+                    employee.department, employee.employee_name, employee.position, 
+                    &employee.salary, employee.join_date) != EOF) {
+                    printf("%s\t%s\t%s\t%.2f\t%s\n", 
+                        employee.department, employee.employee_name, employee.position, 
+                        employee.salary, employee.join_date);
+                }
+                fclose(fptr);
+                break;
+            }
+            case 3: {
+                char search_name[50];
+                printf("Enter employee name to search: ");
+                scanf("%49s", search_name);
+                
+                FILE *fptr = fopen("office.txt", "r");
+                if (fptr == NULL) {
+                    printf("No employees found\n");
+                    return;
+                }
+                
+                struct Office employee;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%49[^,],%49[^,],%f,%19[^\n]\n", 
+                    employee.department, employee.employee_name, employee.position, 
+                    &employee.salary, employee.join_date) != EOF) {
+                    if (strcmp(employee.employee_name, search_name) == 0) {
+                        printf("\nEmployee found:\n");
+                        printf("Department: %s\nName: %s\nPosition: %s\nSalary: %.2f\nJoin Date: %s\n", 
+                            employee.department, employee.employee_name, employee.position, 
+                            employee.salary, employee.join_date);
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    printf("Employee not found\n");
+                }
+                fclose(fptr);
+                break;
+            }
+            case 4: {
+                char update_name[50];
+                printf("Enter employee name to update: ");
+                scanf("%49s", update_name);
+                
+                FILE *fptr = fopen("office.txt", "r");
+                FILE *temp = fopen("temp.txt", "w");
+                if (fptr == NULL || temp == NULL) {
+                    printf("Error opening files\n");
+                    return;
+                }
+                
+                struct Office employee;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%49[^,],%49[^,],%f,%19[^\n]\n", 
+                    employee.department, employee.employee_name, employee.position, 
+                    &employee.salary, employee.join_date) != EOF) {
+                    if (strcmp(employee.employee_name, update_name) == 0) {
+                        found = 1;
+                        printf("Enter new department: ");
+                        scanf("%49s", employee.department);
+                        printf("Enter new position: ");
+                        scanf("%49s", employee.position);
+                        printf("Enter new salary: ");
+                        scanf("%f", &employee.salary);
+                        printf("Enter new join date (DD/MM/YYYY): ");
+                        scanf("%19s", employee.join_date);
+                    }
+                    fprintf(temp, "%s,%s,%s,%.2f,%s\n", 
+                        employee.department, employee.employee_name, employee.position, 
+                        employee.salary, employee.join_date);
+                }
+                
+                fclose(fptr);
+                fclose(temp);
+                
+                remove("office.txt");
+                rename("temp.txt", "office.txt");
+                
+                if (found) {
+                    printf("Employee details updated successfully\n");
+                } else {
+                    printf("Employee not found\n");
+                }
+                break;
+            }
+            case 5:
+                printf("Returning to libraries menu...\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 5);
+}
+
+// Student Management System
+void Student_Management(void) {
+    int choice;
+    do {
+        printf("\n========== Student Management System ==========\n");
+        printf("1. Add Student\n");
+        printf("2. View Students\n");
+        printf("3. Search Student\n");
+        printf("4. Update Student Details\n");
+        printf("5. Back to Libraries Menu\n");
+        printf("Enter your choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
+            case 1: {
+                struct Student student;
+                printf("Enter student name: ");
+                scanf("%49s", student.name);
+                printf("Enter roll number: ");
+                scanf("%d", &student.roll_number);
+                printf("Enter course: ");
+                scanf("%49s", student.course);
+                printf("Enter department: ");
+                scanf("%49s", student.department);
+                printf("Enter CGPA: ");
+                scanf("%f", &student.cgpa);
+                printf("Enter admission date (DD/MM/YYYY): ");
+                scanf("%19s", student.admission_date);
+
+                FILE *fptr = fopen("students.txt", "a");
+                if (fptr == NULL) {
+                    printf("Error opening file\n");
+                    return;
+                }
+                fprintf(fptr, "%s,%d,%s,%s,%.2f,%s\n", 
+                    student.name, student.roll_number, student.course, 
+                    student.department, student.cgpa, student.admission_date);
+                fclose(fptr);
+                printf("Student added successfully!\n");
+                break;
+            }
+            case 2: {
+                FILE *fptr = fopen("students.txt", "r");
+                if (fptr == NULL) {
+                    printf("No students found\n");
+                    return;
+                }
+                printf("\nStudents:\n");
+                printf("Name\tRoll No\tCourse\tDepartment\tCGPA\tAdmission Date\n");
+                printf("----------------------------------------------------------------\n");
+                struct Student student;
+                while (fscanf(fptr, "%49[^,],%d,%49[^,],%49[^,],%f,%19[^\n]\n", 
+                    student.name, &student.roll_number, student.course, 
+                    student.department, &student.cgpa, student.admission_date) != EOF) {
+                    printf("%s\t%d\t%s\t%s\t%.2f\t%s\n", 
+                        student.name, student.roll_number, student.course, 
+                        student.department, student.cgpa, student.admission_date);
+                }
+                fclose(fptr);
+                break;
+            }
+            case 3: {
+                int search_roll;
+                printf("Enter roll number to search: ");
+                scanf("%d", &search_roll);
+                
+                FILE *fptr = fopen("students.txt", "r");
+                if (fptr == NULL) {
+                    printf("No students found\n");
+                    return;
+                }
+                
+                struct Student student;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%d,%49[^,],%49[^,],%f,%19[^\n]\n", 
+                    student.name, &student.roll_number, student.course, 
+                    student.department, &student.cgpa, student.admission_date) != EOF) {
+                    if (student.roll_number == search_roll) {
+                        printf("\nStudent found:\n");
+                        printf("Name: %s\nRoll Number: %d\nCourse: %s\nDepartment: %s\nCGPA: %.2f\nAdmission Date: %s\n", 
+                            student.name, student.roll_number, student.course, 
+                            student.department, student.cgpa, student.admission_date);
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    printf("Student not found\n");
+                }
+                fclose(fptr);
+                break;
+            }
+            case 4: {
+                int update_roll;
+                printf("Enter roll number to update: ");
+                scanf("%d", &update_roll);
+                
+                FILE *fptr = fopen("students.txt", "r");
+                FILE *temp = fopen("temp.txt", "w");
+                if (fptr == NULL || temp == NULL) {
+                    printf("Error opening files\n");
+                    return;
+                }
+                
+                struct Student student;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%d,%49[^,],%49[^,],%f,%19[^\n]\n", 
+                    student.name, &student.roll_number, student.course, 
+                    student.department, &student.cgpa, student.admission_date) != EOF) {
+                    if (student.roll_number == update_roll) {
+                        found = 1;
+                        printf("Enter new course: ");
+                        scanf("%49s", student.course);
+                        printf("Enter new department: ");
+                        scanf("%49s", student.department);
+                        printf("Enter new CGPA: ");
+                        scanf("%f", &student.cgpa);
+                    }
+                    fprintf(temp, "%s,%d,%s,%s,%.2f,%s\n", 
+                        student.name, student.roll_number, student.course, 
+                        student.department, student.cgpa, student.admission_date);
+                }
+                
+                fclose(fptr);
+                fclose(temp);
+                
+                remove("students.txt");
+                rename("temp.txt", "students.txt");
+                
+                if (found) {
+                    printf("Student details updated successfully\n");
+                } else {
+                    printf("Student not found\n");
+                }
+                break;
+            }
+            case 5:
+                printf("Returning to libraries menu...\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 5);
+}
+
+// Library Management System
+void Library_Management(void) {
+    int choice;
+    do {
+        printf("\n========== Library Management System ==========\n");
+        printf("1. Add Book\n");
+        printf("2. View Books\n");
+        printf("3. Search Book\n");
+        printf("4. Issue Book\n");
+        printf("5. Return Book\n");
+        printf("6. Back to Libraries Menu\n");
+        printf("Enter your choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
+            case 1: {
+                struct Book book;
+                printf("Enter book title: ");
+                scanf("%49s", book.title);
+                printf("Enter author name: ");
+                scanf("%49s", book.author);
+                book.available = 1;
+                strcpy(book.due_date, "N/A");
+
+                FILE *fptr = fopen("library.txt", "a");
+                if (fptr == NULL) {
+                    printf("Error opening file\n");
+                    return;
+                }
+                fprintf(fptr, "%s,%s,%d,%s\n", book.title, book.author, book.available, book.due_date);
+                fclose(fptr);
+                printf("Book added successfully!\n");
+                break;
+            }
+            case 2: {
+                FILE *fptr = fopen("library.txt", "r");
+                if (fptr == NULL) {
+                    printf("No books found\n");
+                    return;
+                }
+                printf("\nBooks:\n");
+                printf("Title\tAuthor\tAvailable\tDue Date\n");
+                printf("----------------------------------------\n");
+                struct Book book;
+                while (fscanf(fptr, "%49[^,],%49[^,],%d,%19[^\n]\n", 
+                    book.title, book.author, &book.available, book.due_date) != EOF) {
+                    printf("%s\t%s\t%s\t%s\n", 
+                        book.title, book.author, 
+                        book.available ? "Yes" : "No", 
+                        book.due_date);
+                }
+                fclose(fptr);
+                break;
+            }
+            case 3: {
+                char search_title[50];
+                printf("Enter book title to search: ");
+                scanf("%49s", search_title);
+                
+                FILE *fptr = fopen("library.txt", "r");
+                if (fptr == NULL) {
+                    printf("No books found\n");
+                    return;
+                }
+                
+                struct Book book;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%49[^,],%d,%19[^\n]\n", 
+                    book.title, book.author, &book.available, book.due_date) != EOF) {
+                    if (strcmp(book.title, search_title) == 0) {
+                        printf("\nBook found:\n");
+                        printf("Title: %s\nAuthor: %s\nAvailable: %s\nDue Date: %s\n", 
+                            book.title, book.author, 
+                            book.available ? "Yes" : "No", 
+                            book.due_date);
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    printf("Book not found\n");
+                }
+                fclose(fptr);
+                break;
+            }
+            case 4: {
+                char issue_title[50];
+                printf("Enter book title to issue: ");
+                scanf("%49s", issue_title);
+                
+                FILE *fptr = fopen("library.txt", "r");
+                FILE *temp = fopen("temp.txt", "w");
+                if (fptr == NULL || temp == NULL) {
+                    printf("Error opening files\n");
+                    return;
+                }
+                
+                struct Book book;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%49[^,],%d,%19[^\n]\n", 
+                    book.title, book.author, &book.available, book.due_date) != EOF) {
+                    if (strcmp(book.title, issue_title) == 0 && book.available) {
+                        found = 1;
+                        book.available = 0;
+                        time_t now;
+                        time(&now);
+                        struct tm *local = localtime(&now);
+                        local->tm_mday += 14; // Due date is 14 days from now
+                        mktime(local);
+                        strftime(book.due_date, sizeof(book.due_date), "%d/%m/%Y", local);
+                        printf("Book issued successfully. Due date: %s\n", book.due_date);
+                    }
+                    fprintf(temp, "%s,%s,%d,%s\n", book.title, book.author, book.available, book.due_date);
+                }
+                
+                fclose(fptr);
+                fclose(temp);
+                
+                if (!found) {
+                    printf("Book not found or not available\n");
+                    remove("temp.txt");
+                } else {
+                    remove("library.txt");
+                    rename("temp.txt", "library.txt");
+                }
+                break;
+            }
+            case 5: {
+                char return_title[50];
+                printf("Enter book title to return: ");
+                scanf("%49s", return_title);
+                
+                FILE *fptr = fopen("library.txt", "r");
+                FILE *temp = fopen("temp.txt", "w");
+                if (fptr == NULL || temp == NULL) {
+                    printf("Error opening files\n");
+                    return;
+                }
+                
+                struct Book book;
+                int found = 0;
+                while (fscanf(fptr, "%49[^,],%49[^,],%d,%19[^\n]\n", 
+                    book.title, book.author, &book.available, book.due_date) != EOF) {
+                    if (strcmp(book.title, return_title) == 0 && !book.available) {
+                        found = 1;
+                        book.available = 1;
+                        strcpy(book.due_date, "N/A");
+                        printf("Book returned successfully\n");
+                    }
+                    fprintf(temp, "%s,%s,%d,%s\n", book.title, book.author, book.available, book.due_date);
+                }
+                
+                fclose(fptr);
+                fclose(temp);
+                
+                if (!found) {
+                    printf("Book not found or already returned\n");
+                    remove("temp.txt");
+                } else {
+                    remove("library.txt");
+                    rename("temp.txt", "library.txt");
+                }
+                break;
+            }
+            case 6:
+                printf("Returning to libraries menu...\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 6);
+}
+
+// Ticket Management System
+void Ticket_Management(void) {
+    int choice;
+    do {
+        printf("\n========== Ticket Management System ==========\n");
+        printf("1. Book Ticket\n");
+        printf("2. View Tickets\n");
+        printf("3. Search Ticket\n");
+        printf("4. Cancel Ticket\n");
+        printf("5. Back to Libraries Menu\n");
+        printf("Enter your choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        switch (choice) {
+            case 1: {
+                struct Ticket ticket;
+                printf("Enter personal ID: ");
+                scanf("%19s", ticket.personal_id);
+                printf("Enter train name: ");
+                scanf("%49s", ticket.train_name);
+                printf("Enter ticket price: ");
+                scanf("%f", &ticket.ticket_price);
+
+                FILE *fptr = fopen("tickets.txt", "a");
+                if (fptr == NULL) {
+                    printf("Error opening file\n");
+                    return;
+                }
+                fprintf(fptr, "%s,%s,%.2f\n", ticket.personal_id, ticket.train_name, ticket.ticket_price);
+                fclose(fptr);
+                printf("Ticket booked successfully!\n");
+                break;
+            }
+            case 2: {
+                FILE *fptr = fopen("tickets.txt", "r");
+                if (fptr == NULL) {
+                    printf("No tickets found\n");
+                    return;
+                }
+                printf("\nTickets:\n");
+                printf("Personal ID\tTrain Name\tPrice\n");
+                printf("----------------------------------------\n");
+                struct Ticket ticket;
+                while (fscanf(fptr, "%19[^,],%49[^,],%f\n", 
+                    ticket.personal_id, ticket.train_name, &ticket.ticket_price) != EOF) {
+                    printf("%s\t%s\t%.2f\n", 
+                        ticket.personal_id, ticket.train_name, ticket.ticket_price);
+                }
+                fclose(fptr);
+                break;
+            }
+            case 3: {
+                char search_id[20];
+                printf("Enter personal ID to search: ");
+                scanf("%19s", search_id);
+                
+                FILE *fptr = fopen("tickets.txt", "r");
+                if (fptr == NULL) {
+                    printf("No tickets found\n");
+                    return;
+                }
+                
+                struct Ticket ticket;
+                int found = 0;
+                while (fscanf(fptr, "%19[^,],%49[^,],%f\n", 
+                    ticket.personal_id, ticket.train_name, &ticket.ticket_price) != EOF) {
+                    if (strcmp(ticket.personal_id, search_id) == 0) {
+                        printf("\nTicket found:\n");
+                        printf("Personal ID: %s\nTrain Name: %s\nPrice: %.2f\n", 
+                            ticket.personal_id, ticket.train_name, ticket.ticket_price);
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    printf("Ticket not found\n");
+                }
+                fclose(fptr);
+                break;
+            }
+            case 4: {
+                char cancel_id[20];
+                printf("Enter personal ID to cancel ticket: ");
+                scanf("%19s", cancel_id);
+                
+                FILE *fptr = fopen("tickets.txt", "r");
+                FILE *temp = fopen("temp.txt", "w");
+                if (fptr == NULL || temp == NULL) {
+                    printf("Error opening files\n");
+                    return;
+                }
+                
+                struct Ticket ticket;
+                int found = 0;
+                while (fscanf(fptr, "%19[^,],%49[^,],%f\n", 
+                    ticket.personal_id, ticket.train_name, &ticket.ticket_price) != EOF) {
+                    if (strcmp(ticket.personal_id, cancel_id) != 0) {
+                        fprintf(temp, "%s,%s,%.2f\n", 
+                            ticket.personal_id, ticket.train_name, ticket.ticket_price);
+                    } else {
+                        found = 1;
+                    }
+                }
+                
+                fclose(fptr);
+                fclose(temp);
+                
+                if (!found) {
+                    printf("Ticket not found\n");
+                    remove("temp.txt");
+                } else {
+                    remove("tickets.txt");
+                    rename("temp.txt", "tickets.txt");
+                    printf("Ticket cancelled successfully\n");
+                }
+                break;
+            }
+            case 5:
+                printf("Returning to libraries menu...\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 5);
+}
+
+int create_database(void) {
+    char database_name[MAX_DB_NAME];
+    printf("\nEnter database name: ");
+    if (scanf("%49s", database_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return -1;
+    }
+
+    if (!is_valid_database_name(database_name)) {
+        printf("Invalid database name. Use only alphanumeric characters, underscore, and hyphen.\n");
+        return -1;
+    }
+
+    char filename[MAX_DB_NAME + 4]; // +4 for ".txt"
+    snprintf(filename, sizeof(filename), "%s.txt", database_name);
+
+    FILE *fptr = fopen(filename, "r");
+    if (fptr != NULL) {
+        printf("Database already exists!\n");
+        fclose(fptr);
+        return -1;
+    }
+
+    fptr = fopen(filename, "w");
+    if (fptr == NULL) {
+        printf("Error creating database\n");
+        return -1;
+    }
+
+    fprintf(fptr, "Database: %s\nTables:\n", database_name);
+    fclose(fptr);
+    printf("Database created successfully!\n");
+    return 0;
+}
+
+void display_table_data(char *database_name) {
+    char table_name[MAX_STR_LEN];
+    printf("\nEnter table name to display: ");
+    if (scanf("%49s", table_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    char table_filename[MAX_STR_LEN];
+    snprintf(table_filename, sizeof(table_filename), "%s_%s.txt", database_name, table_name);
+
+    FILE *fptr = fopen(table_filename, "r");
+    if (fptr == NULL) {
+        printf("Table does not exist\n");
+        return;
+    }
+
+    struct Table table;
+    char line[MAX_STR_LEN];
+    
+    // Read table header
+    fscanf(fptr, "Table: %s\nRows: %d\nColumns: %d\n\n", 
+           table.name, &table.rows, &table.columns);
+
+    // Display column headers
+    printf("\nTable: %s\n", table.name);
+    printf("Columns: ");
+    for (int i = 0; i < table.columns; i++) {
+        printf("%s ", table.column_names[i]);
+    }
+    printf("\n");
+
+    // Display data
+    printf("\nData:\n");
+    while (fgets(line, sizeof(line), fptr) != NULL) {
+        printf("%s", line);
+    }
+
+    fclose(fptr);
+}
+
+void sort_table_in_database(char *database_name) {
+    char table_name[MAX_STR_LEN];
+    printf("\nEnter table name to sort: ");
+    if (scanf("%49s", table_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    char table_filename[MAX_STR_LEN];
+    snprintf(table_filename, sizeof(table_filename), "%s_%s.txt", database_name, table_name);
+
+    FILE *fptr = fopen(table_filename, "r");
+    if (fptr == NULL) {
+        printf("Table does not exist\n");
+        return;
+    }
+
+    struct Table table;
+    fscanf(fptr, "Table: %s\nRows: %d\nColumns: %d\n\n", 
+           table.name, &table.rows, &table.columns);
+
+    // Display available columns for sorting
+    printf("\nAvailable columns for sorting:\n");
+    for (int i = 0; i < table.columns; i++) {
+        printf("%d. %s\n", i + 1, table.column_names[i]);
+    }
+
+    int column_choice;
+    printf("\nEnter column number to sort by: ");
+    if (scanf("%d", &column_choice) != 1 || column_choice < 1 || column_choice > table.columns) {
+        printf("Invalid column choice\n");
+        fclose(fptr);
+        return;
+    }
+
+    int sort_order;
+    printf("Sort order (1 for ascending, 0 for descending): ");
+    if (scanf("%d", &sort_order) != 1 || (sort_order != 0 && sort_order != 1)) {
+        printf("Invalid sort order\n");
+        fclose(fptr);
+        return;
+    }
+
+    // Sort the table
+    sort_table(&table, column_choice - 1, sort_order);
+    
+    // Display sorted table
+    display_sorted_table(&table);
+
+    fclose(fptr);
+}
+
+void display_zron_logo() {
+    printf("\n");
+    printf("+-----------------------------------------+\n");
+    printf(" _______ _____ ___       _  _____ \n");
+    printf("|___   / |  ___| \\    | |/ /  _ \\\n");
+    printf("   /  /  | |__ | |\\   | || | | | |\n");
+    printf("  /  /   |  __|| | \\  | || | | | |\n");
+    printf(" /  /__  | |___| |  \\ / /| | |_| |\n");
+    printf("/_____ |  \\____\\   \\_/  \\___ / \n");
+    printf("+-----------------------------------------+\n");
+    printf("\n");
+}
+
+// Function to input table data
+void input_table_data(char *database_name) {
+    char table_name[MAX_STR_LEN];
+    printf("\nEnter table name: ");
+    if (scanf("%49s", table_name) != 1) {
+        printf("Invalid input\n");
+        while (getchar() != '\n');
+        return;
+    }
+
+    char table_filename[MAX_STR_LEN];
+    snprintf(table_filename, sizeof(table_filename), "%s_%s.txt", database_name, table_name);
+
+    FILE *fptr = fopen(table_filename, "w");
+    if (fptr == NULL) {
+        printf("Error creating table file\n");
+        return;
+    }
+
+    int rows, cols;
+    printf("Enter number of rows: ");
+    scanf("%d", &rows);
+    printf("Enter number of columns: ");
+    scanf("%d", &cols);
+
+    if (rows <= 0 || cols <= 0 || rows > MAX_ROWS || cols > MAX_COLS) {
+        printf("Invalid dimensions. Maximum allowed: %d rows, %d columns\n", MAX_ROWS, MAX_COLS);
+        fclose(fptr);
+        return;
+    }
+
+    struct Table table;
+    strcpy(table.name, table_name);
+    table.rows = rows;
+    table.columns = cols;
+
+    // Input column names and types
+    printf("\nEnter column information:\n");
+    for (int i = 0; i < cols; i++) {
+        printf("Column %d name: ", i + 1);
+        scanf("%49s", table.column_names[i]);
+        do {
+            printf("Column %d type (i-integer, f-float, s-string): ", i + 1);
+            scanf(" %c", &table.column_types[i]);
+        } while (table.column_types[i] != 'i' && table.column_types[i] != 'f' && table.column_types[i] != 's');
+    }
+
+    // Input data
+    printf("\nEnter table data:\n");
+    for (int i = 0; i < rows; i++) {
+        printf("Row %d:\n", i + 1);
+        for (int j = 0; j < cols; j++) {
+            printf("Enter %s (%c): ", table.column_names[j], table.column_types[j]);
+            switch(table.column_types[j]) {
+                case 'i':
+                    scanf("%d", &table.data[i][j].int_value);
+                    break;
+                case 'f':
+                    scanf("%f", &table.data[i][j].float_value);
+                    break;
+                case 's':
+                    scanf("%49s", table.data[i][j].str_value);
+                    break;
+            }
+        }
+    }
+
+    // Save table to file
+    fprintf(fptr, "Table: %s\nRows: %d\nColumns: %d\n\n", table.name, table.rows, table.columns);
+    fprintf(fptr, "Column Names: ");
+    for (int i = 0; i < table.columns; i++) {
+        fprintf(fptr, "%s ", table.column_names[i]);
+    }
+    fprintf(fptr, "\nColumn Types: ");
+    for (int i = 0; i < table.columns; i++) {
+        fprintf(fptr, "%c ", table.column_types[i]);
+    }
+    fprintf(fptr, "\n\nData:\n");
+
+    // Save data
+    for (int i = 0; i < table.rows; i++) {
+        for (int j = 0; j < table.columns; j++) {
+            switch(table.column_types[j]) {
+                case 'i':
+                    fprintf(fptr, "%d ", table.data[i][j].int_value);
+                    break;
+                case 'f':
+                    fprintf(fptr, "%.2f ", table.data[i][j].float_value);
+                    break;
+                case 's':
+                    fprintf(fptr, "%s ", table.data[i][j].str_value);
+                    break;
+            }
+        }
+        fprintf(fptr, "\n");
+    }
+
+    fclose(fptr);
+    printf("\nTable created and data saved successfully!\n");
+}
+
 int main() {
     // Initialize password system
     initialize_password_storage();
@@ -2067,30 +1948,25 @@ int main() {
         printf("\nPlease try again or register a new account.\n");
     }
     
-    printf("\nWelcome to the Database Management System.\n\n");
+    // Display logo once after successful login
+    display_zron_logo();
+    printf("Welcome to the Database Management System.\n\n");
     
     int choice;
     do {
-        printf("------+-----+------+------+------+------+\n");
-        printf("  _______   ______  _   _     __  ______  \n");
-        printf(" |__  / _ \ |__  / _  \ | \\  | | |___  / \n");
-        printf("   / / | | |  / / | |   | |\\ | |    / /  \n");
-        printf("  / /| |_| | / /__|_|   | | \\| |   / /__ \n");
-        printf(" /____\___/ /____|___/|_| |  \\_|  /_____|\n");
-        printf("------+-----+------+------+------+------+\n\n");
         printf("Database Management System\n");
         printf("1. Show Existing Databases\n");
         printf("2. Create Database\n");
         printf("3. Access Database\n");
         printf("4. Delete Database\n");
         printf("5. Sort Table\n");
-        printf("6. Student Management\n");
+        printf("6. Pre-defined Libraries\n");
         printf("7. Exit\n");
         printf("Enter your choice: ");
         
         if (scanf("%d", &choice) != 1) {
             printf("Invalid input. Please enter a number.\n");
-            while (getchar() != '\n'); // Clear input buffer
+            while (getchar() != '\n');
             continue;
         }
 
@@ -2111,9 +1987,11 @@ int main() {
                 Table_sorting();
                 break;
             case 6:
-                Student_Managment();
+                pre_made_libraries();
                 break;
             case 7:
+                printf("\nThank you for using ZRON Database Management System\n");
+                display_zron_logo();
                 printf("Exiting program...\n");
                 break;
             default:
